@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ken's Coffee</title>
+<style>
+  :root {
+    --green: #00704A;
+    --green-dark: #1E3932;
+    --green-light: #D4E9E2;
+    --gold: #CBA258;
+    --cream: #F2F0EB;
+    --card: #FFFFFF;
+    --text: #1E1E1E;
+    --muted: #6B6B6B;
+    --line: #E3E0D8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- Phone frame (desktop only) ---------- */
+  .stage { min-height: 100%; display: flex; }
+  .phone {
+    width: 100%;
+    min-height: 100vh;
+    background: var(--cream);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  @media (min-width: 600px) {
+    body { background: linear-gradient(135deg, #1E3932, #0d1f1a); }
+    .stage { align-items: center; justify-content: center; padding: 32px 0; min-height: 100vh; }
+    .phone {
+      width: 390px;
+      height: 820px;
+      min-height: 0;
+      border-radius: 48px;
+      border: 12px solid #111;
+      box-shadow: 0 30px 80px rgba(0,0,0,.5), inset 0 0 0 2px #333;
+    }
+    .phone::before {
+      content: "";
+      position: absolute;
+      top: 10px; left: 50%;
+      transform: translateX(-50%);
+      width: 110px; height: 30px;
+      background: #111;
+      border-radius: 20px;
+      z-index: 20;
+    }
+  }
+
+  /* ---------- Screens ---------- */
+  .screen { display: none; flex: 1; flex-direction: column; overflow-y: auto; }
+  .screen.active { display: flex; }
+
+  .topbar {
+    background: var(--green);
+    color: #fff;
+    padding: 48px 20px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .topbar.plain {
+    background: var(--card);
+    color: var(--text);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar h1 { font-size: 20px; font-weight: 700; letter-spacing: -.2px; }
+  .back {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font-size: 22px;
+    cursor: pointer;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .back:hover { background: rgba(0,0,0,.06); }
+  .back:focus-visible, button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+  .content { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* ---------- Badge ---------- */
+  .badge {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: var(--green);
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px var(--green);
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .badge svg { width: 28px; height: 28px; }
+  .brand { display: flex; flex-direction: column; line-height: 1.15; }
+  .brand strong { font-size: 20px; letter-spacing: .3px; }
+  .brand span { font-size: 12px; opacity: .85; letter-spacing: 1.5px; text-transform: uppercase; }
+
+  /* ---------- Home ---------- */
+  .welcome { font-size: 24px; font-weight: 700; color: var(--green-dark); margin-top: 6px; }
+  .sub { color: var(--muted); font-size: 15px; margin-top: -8px; }
+
+  .hero {
+    background: var(--green-dark);
+    color: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(30,57,50,.25);
+  }
+  .hero-art {
+    background: radial-gradient(circle at 50% 70%, #2f5a4e 0%, var(--green-dark) 70%);
+    display: grid; place-items: center;
+    padding: 28px 0 8px;
+  }
+  .hero-art svg { width: 150px; height: 170px; }
+  .hero-body { padding: 18px 22px 24px; }
+  .eyebrow {
+    display: inline-block;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--green-dark);
+    background: var(--gold);
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+  }
+  .hero h2 { font-size: 26px; margin-bottom: 6px; }
+  .hero p { font-size: 15px; opacity: .85; line-height: 1.45; margin-bottom: 18px; }
+
+  .btn {
+    display: block;
+    width: 100%;
+    border: none;
+    border-radius: 999px;
+    padding: 16px 24px;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .12s ease, background .2s ease;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: var(--green); color: #fff; }
+  .btn-primary:hover { background: #005c3d; }
+  .btn-light { background: #fff; color: var(--green-dark); }
+  .btn-light:hover { background: var(--green-light); }
+  .btn-outline { background: transparent; color: var(--green); border: 2px solid var(--green); }
+
+  /* ---------- Order cards ---------- */
+  .q-title { font-size: 26px; font-weight: 700; color: var(--green-dark); }
+  .q-sub { color: var(--muted); font-size: 15px; margin-top: -8px; }
+
+  .order-card {
+    background: var(--card);
+    border: 2px solid transparent;
+    border-radius: 18px;
+    padding: 18px;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    transition: border-color .2s, transform .12s, box-shadow .2s;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .order-card:hover { border-color: var(--green); box-shadow: 0 6px 18px rgba(0,112,74,.15); }
+  .order-card:active { transform: scale(.98); }
+
+  .oc-head { display: flex; align-items: center; gap: 14px; }
+  .oc-art { width: 64px; height: 64px; border-radius: 50%; background: var(--green-light); display: grid; place-items: center; flex-shrink: 0; }
+  .oc-art svg { width: 40px; height: 44px; }
+  .oc-label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+  .oc-title { font-size: 18px; font-weight: 700; margin-top: 2px; }
+  .size-pill {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 12px; font-weight: 700;
+    color: #fff; background: var(--green);
+    padding: 3px 10px; border-radius: 999px;
+  }
+  .size-pill.venti { background: var(--green-dark); }
+
+  .item-block { border-top: 1px solid var(--line); padding-top: 12px; }
+  .item-name { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+  .mods { list-style: none; margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+  .mods li { font-size: 14px; color: var(--muted); padding-left: 16px; position: relative; }
+  .mods li::before { content: ""; position: absolute; left: 2px; top: 8px; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+  .mods li b { color: var(--text); font-weight: 600; }
+  .oc-cta { color: var(--green); font-weight: 700; font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
+
+  /* ---------- Checkout ---------- */
+  .panel { background: var(--card); border-radius: 16px; padding: 16px 18px; box-shadow: 0 2px 10px rgba(0,0,0,.05); }
+  .panel-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); font-weight: 700; margin-bottom: 10px; }
+  .store { display: flex; gap: 12px; align-items: center; }
+  .store-icon { width: 42px; height: 42px; border-radius: 12px; background: var(--green-light); display: grid; place-items: center; font-size: 20px; flex-shrink: 0; }
+  .store strong { display: block; font-size: 16px; }
+  .store span { font-size: 13px; color: var(--muted); }
+
+  .line-item { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .line-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .line-item:first-of-type { padding-top: 0; }
+  .li-name { font-weight: 700; font-size: 15px; }
+  .li-mods { font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.45; }
+  .li-price { font-weight: 600; white-space: nowrap; font-size: 14px; color: var(--green-dark); }
+
+  .totals .row { display: flex; justify-content: space-between; font-size: 15px; padding: 5px 0; color: var(--muted); }
+  .totals .row.total { color: var(--text); font-size: 18px; font-weight: 800; border-top: 1px solid var(--line); margin-top: 8px; padding-top: 12px; }
+  .totals .row.total span:last-child { color: var(--green); }
+
+  .pay { display: flex; align-items: center; gap: 12px; }
+  .pay-card { width: 46px; height: 32px; border-radius: 6px; background: linear-gradient(135deg, var(--green), var(--green-dark)); display: grid; place-items: center; color: #fff; font-size: 16px; flex-shrink: 0; }
+  .pay strong { display: block; font-size: 15px; }
+  .pay span { font-size: 13px; color: var(--muted); }
+
+  .sticky-bottom { margin-top: auto; padding: 16px 20px 28px; background: linear-gradient(to top, var(--cream) 70%, rgba(242,240,235,0)); position: sticky; bottom: 0; }
+
+  /* ---------- Confirmation ---------- */
+  .confirm { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 60px 28px 40px; gap: 22px; }
+  .confirm .badge { width: 96px; height: 96px; border-width: 5px; box-shadow: 0 0 0 3px var(--green); }
+  .confirm .badge svg { width: 52px; height: 52px; }
+  .confirm h2 { font-size: 24px; color: var(--green-dark); line-height: 1.35; max-width: 300px; }
+  .confirm p { color: var(--muted); font-size: 15px; }
+  .confirm .btn { max-width: 280px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+
+    <!-- ===== HOME ===== -->
+    <section class="screen active" id="home" aria-label="Home">
+      <header class="topbar">
+        <div class="badge" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M7 12h16v7a7 7 0 0 1-7 7h-2a7 7 0 0 1-7-7v-7z" fill="#fff"/>
+            <path d="M23 14h2a3 3 0 0 1 0 6h-2" stroke="#fff" stroke-width="2.2" fill="none"/>
+            <path d="M12 4c-1 1.5 1 2.5 0 4M16 4c-1 1.5 1 2.5 0 4M20 4c-1 1.5 1 2.5 0 4" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand">
+          <strong>Ken's Coffee</strong>
+          <span>Est. Today</span>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="welcome">Hi Ken ☕</div>
+        <div class="sub">Your usual is just one tap away.</div>
+
+        <article class="hero">
+          <div class="hero-art" aria-hidden="true">
+            <svg viewBox="0 0 150 170" fill="none">
+              <path d="M58 30c-6 8 6 12 0 20M75 24c-6 8 6 12 0 20M92 30c-6 8 6 12 0 20" stroke="#D4E9E2" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+              <rect x="34" y="58" width="82" height="12" rx="4" fill="#fff"/>
+              <path d="M38 70h74l-8 88a6 6 0 0 1-6 5H52a6 6 0 0 1-6-5l-8-88z" fill="#fff"/>
+              <path d="M42 100h66l-3 34H45l-3-34z" fill="#00704A"/>
+              <circle cx="75" cy="117" r="12" fill="#fff"/>
+              <text x="75" y="122" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="14" fill="#00704A">K</text>
+            </svg>
+          </div>
+          <div class="hero-body">
+            <span class="eyebrow">Exclusive</span>
+            <h2>The Ken Button</h2>
+            <p>A members-only shortcut built for exactly one customer. Ken's favorites, ready to go.</p>
+            <button class="btn btn-light" id="kenButton">Ken Button</button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ===== ORDER SELECTION ===== -->
+    <section class="screen" id="order" aria-label="Order selection">
+      <header class="topbar plain">
+        <button class="back" data-back="home" aria-label="Back">&#8592;</button>
+        <h1>Ken's Menu</h1>
+      </header>
+
+      <div class="content">
+        <div class="q-title">Today Ken feels like...</div>
+        <div class="q-sub">Tap an order to continue.</div>
+
+        <button class="order-card" data-option="1">
+          <div class="oc-head">
+            <div class="oc-art" aria-hidden="true">
+              <svg viewBox="0 0 40 44"><rect x="6" y="8" width="28" height="5" rx="2" fill="#00704A"/><path d="M8 13h24l-3 28H11L8 13z" fill="#00704A"/><rect x="11" y="22" width="18" height="9" fill="#fff"/></svg>
+            </div>
+            <div>
+              <div class="oc-label">Option 1</div>
+              <div class="oc-title">The Grande Classic</div>
+              <span class="size-pill">Grande</span>
+            </div>
+          </div>
+          <div class="item-block">
+            <div class="item-name">☕ Pike Place Roast</div>
+            <ul class="mods">
+              <li><b>Grande</b></li>
+              <li>1/2" whole milk</li>
+              <li><b>3</b> raw sugars</li>
+              <li>Add whipped cream</li>
+            </ul>
+          </div>
+          <div class="item-block">
+            <div class="item-name">🍫 Double Chocolate Brownie</div>
+            <ul class="mods"><li>Not warmed</li></ul>
+          </div>
+          <div class="oc-cta"><span>Choose this order</span><span>&#8594;</span></div>
+        </button>
+
+        <button class="order-card" data-option="2">
+          <div class="oc-head">
+            <div class="oc-art" aria-hidden="true">
+              <svg viewBox="0 0 40 44"><rect x="4" y="4" width="32" height="5" rx="2" fill="#1E3932"/><path d="M6 9h28l-3 33H9L6 9z" fill="#1E3932"/><rect x="10" y="20" width="20" height="10" fill="#fff"/></svg>
+            </div>
+            <div>
+              <div class="oc-label">Option 2</div>
+              <div class="oc-title">The Venti Treat</div>
+              <span class="size-pill venti">Venti</span>
+            </div>
+          </div>
+          <div class="item-block">
+            <div class="item-name">☕ Pike Place Roast</div>
+            <ul class="mods">
+              <li><b>Venti</b></li>
+              <li>1/2" whole milk</li>
+              <li><b>4</b> raw sugars</li>
+              <li>Add whipped cream</li>
+            </ul>
+          </div>
+          <div class="item-block">
+            <div class="item-name">🍫 Double Chocolate Brownie</div>
+            <ul class="mods"><li>Not warmed</li></ul>
+          </div>
+          <div class="oc-cta"><span>Choose this order</span><span>&#8594;</span></div>
+        </button>
+      </div>
+    </section>
+
+    <!-- ===== CHECKOUT ===== -->
+    <section class="screen" id="checkout" aria-label="Checkout">
+      <header class="topbar plain">
+        <button class="back" data-back="order" aria-label="Back">&#8592;</button>
+        <h1>Review Order</h1>
+      </header>
+
+      <div class="content">
+        <div class="panel">
+          <div class="panel-title">Pickup store</div>
+          <div class="store">
+            <div class="store-icon" aria-hidden="true">📍</div>
+            <div>
+              <strong>Ken's Corner Store</strong>
+              <span>In store pickup · Ready in about 2 min</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Your items</div>
+          <div class="line-item">
+            <div>
+              <div class="li-name" id="coDrink">Grande Pike Place Roast</div>
+              <div class="li-mods" id="coDrinkMods"></div>
+            </div>
+            <div class="li-price">2 Good Vibes</div>
+          </div>
+          <div class="line-item">
+            <div>
+              <div class="li-name">Double Chocolate Brownie</div>
+              <div class="li-mods">Not warmed</div>
+            </div>
+            <div class="li-price">1 Good Vibe</div>
+          </div>
+        </div>
+
+        <div class="panel totals">
+          <div class="row"><span>Subtotal</span><span>3 Good Vibes</span></div>
+          <div class="row"><span>Kindness tax</span><span>0</span></div>
+          <div class="row total"><span>Total</span><span>3 Good Vibes ✨</span></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Payment</div>
+          <div class="pay">
+            <div class="pay-card" aria-hidden="true">♥</div>
+            <div>
+              <strong>Paid with Friendship</strong>
+              <span>Balance: unlimited</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sticky-bottom">
+        <button class="btn btn-primary" id="placeOrder">Place Order</button>
+      </div>
+    </section>
+
+    <!-- ===== CONFIRMATION ===== -->
+    <section class="screen" id="confirm" aria-label="Order confirmed">
+      <div class="confirm">
+        <div class="badge" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M7 12h16v7a7 7 0 0 1-7 7h-2a7 7 0 0 1-7-7v-7z" fill="#fff"/>
+            <path d="M23 14h2a3 3 0 0 1 0 6h-2" stroke="#fff" stroke-width="2.2" fill="none"/>
+            <path d="M12 4c-1 1.5 1 2.5 0 4M16 4c-1 1.5 1 2.5 0 4M20 4c-1 1.5 1 2.5 0 4" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2>We hope you enjoyed our exclusive Ken Button today.</h2>
+        <p id="confirmDetail">Your order is on its way.</p>
+        <button class="btn btn-outline" id="homeBtn">Back to Home</button>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+  const orders = {
+    1: { drink: "Grande Pike Place Roast", mods: '1/2" whole milk · 3 raw sugars · Add whipped cream' },
+    2: { drink: "Venti Pike Place Roast",  mods: '1/2" whole milk · 4 raw sugars · Add whipped cream' }
+  };
+
+  function show(id) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.toggle("active", s.id === id));
+    document.getElementById(id).scrollTop = 0;
+  }
+
+  document.getElementById("kenButton").addEventListener("click", () => show("order"));
+
+  document.querySelectorAll(".order-card").forEach(card => {
+    card.addEventListener("click", () => {
+      const o = orders[card.dataset.option];
+      document.getElementById("coDrink").textContent = o.drink;
+      document.getElementById("coDrinkMods").textContent = o.mods;
+      document.getElementById("confirmDetail").textContent =
+        o.drink + " + Double Chocolate Brownie · Paid with 3 Good Vibes";
+      show("checkout");
+    });
+  });
+
+  document.querySelectorAll("[data-back]").forEach(b =>
+    b.addEventListener("click", () => show(b.dataset.back)));
+
+  document.getElementById("placeOrder").addEventListener("click", () => show("confirm"));
+  document.getElementById("homeBtn").addEventListener("click", () => show("home"));
+</script>
+</body>
+</html>
